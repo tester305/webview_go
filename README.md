@@ -35,7 +35,7 @@ curl -sSLo main.go "https://raw.githubusercontent.com/webview/webview_go/master/
 Install dependencies.
 
 ```sh
-go get github.com/webview/webview_go
+go get github.com/tester305/webview_go
 ```
 
 Build the example. On Windows, add `-ldflags="-H windowsgui"` to the command line.
