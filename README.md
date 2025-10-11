@@ -16,31 +16,31 @@ See [Go package documentation][go-docs] for the Go API documentation, or simply 
 
 Start with creating a new directory structure for your project.
 
-```sh
+```bash
 mkdir my-project && cd my-project
 ```
 
 Create a new Go module.
 
-```sh
+```bash
 go mod init example.com/app
 ```
 
 Save one of the example programs into your project directory.
 
-```sh
+```bash
 curl -sSLo main.go "https://raw.githubusercontent.com/webview/webview_go/master/examples/basic/main.go"
 ```
 
 Install dependencies.
 
-```sh
+```bash
 go get github.com/tester305/webview_go
 ```
 
 Build the example. On Windows, add `-ldflags="-H windowsgui"` to the command line.
 
-```sh
+```bash
 go build
 ```
 
