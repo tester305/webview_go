@@ -2,8 +2,8 @@
 > [!WARNING]
 > This is untested and this fork of webview_go can be unstable due to the switch of libwebgtk-4.0 to libwebgtk-4.1
 
-[![GoDoc](https://godoc.org/github.com/webview/webview_go?status.svg)](https://godoc.org/github.com/webview/webview_go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/webview/webview_go)](https://goreportcard.com/report/github.com/webview/webview_go)
+[![GoDoc](https://godoc.org/github.com/tester305/webview_go?status.svg)](https://godoc.org/github.com/tester305/webview_go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tester305/webview_go)](https://goreportcard.com/report/github.com/tester305/webview_go)
 
 Go language binding for the [webview library][webview].
 
@@ -48,5 +48,5 @@ go build
 
 Calling `Eval()` or `Dispatch()` before `Run()` does not work because the webview instance has only been configured and not yet started.
 
-[go-docs]: https://pkg.go.dev/github.com/webview/webview_go
+[go-docs]: https://pkg.go.dev/github.com/tester305/webview_go
 [webview]: https://github.com/webview/webview
