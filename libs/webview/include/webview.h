@@ -1096,9 +1096,9 @@ inline std::string json_parse(const std::string &s, const std::string &key,
 // ====================================================================
 //
 // This implementation uses webkit2gtk backend. It requires gtk+3.0 and
-// webkit2gtk-4.0 libraries. Proper compiler flags can be retrieved via:
+// webkit2gtk-4.1 libraries. Proper compiler flags can be retrieved via:
 //
-//   pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.0
+//   pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.1
 //
 // ====================================================================
 //
@@ -1416,7 +1416,7 @@ private:
     }
 
     constexpr std::array<const char *, 2> lib_names{"libwebkit2gtk-4.1.so",
-                                                    "libwebkit2gtk-4.0.so"};
+                                                    "libwebkit2gtk-4.1.so"};
     auto found =
         std::find_if(lib_names.begin(), lib_names.end(), [](const char *name) {
           return native_library::is_loaded(name);
