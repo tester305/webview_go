@@ -250,66 +250,16 @@ func _webviewBindingGoCallback(w C.webview_t, id *C.char, req *C.char, index uin
 
 func (w *webview) Bind(name string, f interface{}) error {
 	v := reflect.ValueOf(f)
-	// f must be a function
-	if v.Kind() != reflect.Func {
-		return errors.New("only functions can be bound")
-	}
-	// f must return either value and error or just error
-	if n := v.Type().NumOut(); n > 2 {
-		return errors.New("function may only return a value or a value+error")
+	if err := checkBindFuncSignature(v); err != nil {
+		return err
 	}
 
 	binding := func(id, req string) (interface{}, error) {
-		raw := []json.RawMessage{}
-		if err := json.Unmarshal([]byte(req), &raw); err != nil {
+		args, err := parseBindArgs(v, req)
+		if err != nil {
 			return nil, err
 		}
-
-		isVariadic := v.Type().IsVariadic()
-		numIn := v.Type().NumIn()
-		if (isVariadic && len(raw) < numIn-1) || (!isVariadic && len(raw) != numIn) {
-			return nil, errors.New("function arguments mismatch")
-		}
-		args := []reflect.Value{}
-		for i := range raw {
-			var arg reflect.Value
-			if isVariadic && i >= numIn-1 {
-				arg = reflect.New(v.Type().In(numIn - 1).Elem())
-			} else {
-				arg = reflect.New(v.Type().In(i))
-			}
-			if err := json.Unmarshal(raw[i], arg.Interface()); err != nil {
-				return nil, err
-			}
-			args = append(args, arg.Elem())
-		}
-		errorType := reflect.TypeOf((*error)(nil)).Elem()
-		res := v.Call(args)
-		switch len(res) {
-		case 0:
-			// No results from the function, just return nil
-			return nil, nil
-		case 1:
-			// One result may be a value, or an error
-			if res[0].Type().Implements(errorType) {
-				if res[0].Interface() != nil {
-					return nil, res[0].Interface().(error)
-				}
-				return nil, nil
-			}
-			return res[0].Interface(), nil
-		case 2:
-			// Two results: first one is value, second is error
-			if !res[1].Type().Implements(errorType) {
-				return nil, errors.New("second return value must be an error")
-			}
-			if res[1].Interface() == nil {
-				return res[0].Interface(), nil
-			}
-			return res[0].Interface(), res[1].Interface().(error)
-		default:
-			return nil, errors.New("unexpected number of return values")
-		}
+		return callBindFunc(v, args)
 	}
 
 	m.Lock()
@@ -321,6 +271,69 @@ func (w *webview) Bind(name string, f interface{}) error {
 	defer C.free(unsafe.Pointer(cname))
 	C.CgoWebViewBind(w.w, cname, C.uintptr_t(index))
 	return nil
+}
+
+func checkBindFuncSignature(v reflect.Value) error {
+	if v.Kind() != reflect.Func {
+		return errors.New("only functions can be bound")
+	}
+	if n := v.Type().NumOut(); n > 2 {
+		return errors.New("function may only return a value or a value+error")
+	}
+	return nil
+}
+
+func parseBindArgs(v reflect.Value, req string) ([]reflect.Value, error) {
+	var raw []json.RawMessage
+	if err := json.Unmarshal([]byte(req), &raw); err != nil {
+		return nil, err
+	}
+	isVariadic := v.Type().IsVariadic()
+	numIn := v.Type().NumIn()
+	if (isVariadic && len(raw) < numIn-1) || (!isVariadic && len(raw) != numIn) {
+		return nil, errors.New("function arguments mismatch")
+	}
+	var args []reflect.Value
+	for i := range raw {
+		var arg reflect.Value
+		if isVariadic && i >= numIn-1 {
+			arg = reflect.New(v.Type().In(numIn - 1).Elem())
+		} else {
+			arg = reflect.New(v.Type().In(i))
+		}
+		if err := json.Unmarshal(raw[i], arg.Interface()); err != nil {
+			return nil, err
+		}
+		args = append(args, arg.Elem())
+	}
+	return args, nil
+}
+
+func callBindFunc(v reflect.Value, args []reflect.Value) (interface{}, error) {
+	errorType := reflect.TypeOf((*error)(nil)).Elem()
+	res := v.Call(args)
+	switch len(res) {
+	case 0:
+		return nil, nil
+	case 1:
+		if res[0].Type().Implements(errorType) {
+			if res[0].Interface() != nil {
+				return nil, res[0].Interface().(error)
+			}
+			return nil, nil
+		}
+		return res[0].Interface(), nil
+	case 2:
+		if !res[1].Type().Implements(errorType) {
+			return nil, errors.New("second return value must be an error")
+		}
+		if res[1].Interface() == nil {
+			return res[0].Interface(), nil
+		}
+		return res[0].Interface(), res[1].Interface().(error)
+	default:
+		return nil, errors.New("unexpected number of return values")
+	}
 }
 
 func (w *webview) Unbind(name string) error {
