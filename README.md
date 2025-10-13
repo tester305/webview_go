@@ -1,5 +1,5 @@
 # webview_go
-[!VERIFIED]
+[!NOTE]
 > This is tested and works successfully
 [![GoDoc](https://godoc.org/github.com/tester305/webview_go?status.svg)](https://godoc.org/github.com/tester305/webview_go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tester305/webview_go)](https://goreportcard.com/report/github.com/tester305/webview_go)
