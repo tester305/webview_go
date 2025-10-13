@@ -25,16 +25,17 @@ void CgoWebViewUnbind(webview_t w, const char *name);
 */
 import "C"
 import (
-	_ "github.com/tester305/webview_go/libs/mswebview2"
-	_ "github.com/tester305/webview_go/libs/mswebview2/include"
-	_ "github.com/tester305/webview_go/libs/webview"
-	_ "github.com/tester305/webview_go/libs/webview/include"
 	"encoding/json"
 	"errors"
 	"reflect"
 	"runtime"
 	"sync"
 	"unsafe"
+
+	_ "github.com/webview/webview_go/libs/mswebview2"
+	_ "github.com/webview/webview_go/libs/mswebview2/include"
+	_ "github.com/webview/webview_go/libs/webview"
+	_ "github.com/webview/webview_go/libs/webview/include"
 )
 
 func init() {
@@ -60,7 +61,6 @@ const (
 )
 
 type WebView interface {
-
 	// Run runs the main loop until it's terminated. After this function exits -
 	// you must destroy the webview.
 	Run()
