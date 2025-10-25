@@ -9,7 +9,7 @@ jobs:
       matrix:
         include:
           # -------------------------------------------------
-          # macOS-15 (arm64) – Go 1.16+ only
+          # macOS-15 (arm64) – Go 1.16+
           # -------------------------------------------------
           - { image: macos-15, go: '1.18' }
           - { image: macos-15, go: '1.17' }
@@ -83,24 +83,28 @@ jobs:
       # -------------------------------------------------
       - name: Replace webview-go fork
         run: |
-          # Append replace directive first (before tidy/vendor)
           echo "replace github.com/webview/webview_go => github.com/tester305/webview_go latest" >> go.mod
-          # Now tidy and vendor with the fork in place
           go mod tidy
           go mod vendor
 
       # -------------------------------------------------
-      # Build examples – apply -ldflags=-w ONLY when needed
+      # Build examples – cross-platform DWARF fix
       # -------------------------------------------------
       - name: Build examples
+        shell: >-
+          ${{ 
+            runner.os == 'Windows' && 'pwsh' || 
+            'bash {0}'
+          }}
         run: |
-          if [[ "${{ matrix.dwarf_fix }}" == "true" ]]; then
+          $dwarf = "${{ matrix.dwarf_fix }}" -eq "true"
+          if ($dwarf) {
             go build -ldflags=-w ./examples/basic
             go build -ldflags=-w ./examples/bind
-          else
+          } else {
             go build ./examples/basic
             go build ./examples/bind
-          fi
+          }
 
       # -------------------------------------------------
       # Run tests
