@@ -19,7 +19,7 @@ jobs:
           - { image: macos-12,     go: '1.15' }
           - { image: macos-12,     go: '1.14' }
           - { image: macos-12,     go: '1.13' }
-          - { image: ubuntu-22.04, go: '1.22', apt: libgtk-4-dev libwebkitgtk-6.0-dev }
+          - { image: ubuntu-22.04, go: '1.22', apt: libgtk-4-dev libwebkit2gtk-4.1-dev }
           - { image: ubuntu-22.04, go: '1.22', apt: libgtk-3-dev libwebkit2gtk-4.1-dev }
           - { image: ubuntu-22.04, go: '1.21', apt: libgtk-3-dev libwebkit2gtk-4.1-dev }
           - { image: ubuntu-22.04, go: '1.20', apt: libgtk-3-dev libwebkit2gtk-4.1-dev }
