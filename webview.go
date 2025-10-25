@@ -43,89 +43,41 @@ func init() {
 	runtime.LockOSThread()
 }
 
-// Hints are used to configure window sizing and resizing
+// ---------------------------------------------------------------------
+// Public constants & types
+// ---------------------------------------------------------------------
+
 type Hint int
 
 const (
-	// Width and height are default size
-	HintNone = C.WEBVIEW_HINT_NONE
-
-	// Window size can not be changed by a user
-	HintFixed = C.WEBVIEW_HINT_FIXED
-
-	// Width and height are minimum bounds
-	HintMin = C.WEBVIEW_HINT_MIN
-
-	// Width and height are maximum bounds
-	HintMax = C.WEBVIEW_HINT_MAX
+	HintNone Hint = C.WEBVIEW_HINT_NONE
+	HintFixed Hint = C.WEBVIEW_HINT_FIXED
+	HintMin   Hint = C.WEBVIEW_HINT_MIN
+	HintMax   Hint = C.WEBVIEW_HINT_MAX
 )
 
 type WebView interface {
-	// Run runs the main loop until it's terminated. After this function exits -
-	// you must destroy the webview.
 	Run()
-
-	// Terminate stops the main loop. It is safe to call this function from
-	// a background thread.
 	Terminate()
-
-	// Dispatch posts a function to be executed on the main thread. You normally
-	// do not need to call this function, unless you want to tweak the native
-	// window.
 	Dispatch(f func())
-
-	// Destroy destroys a webview and closes the native window.
 	Destroy()
-
-	// Window returns a native window handle pointer. When using GTK backend the
-	// pointer is GtkWindow pointer, when using Cocoa backend the pointer is
-	// NSWindow pointer, when using Win32 backend the pointer is HWND pointer.
 	Window() unsafe.Pointer
-
-	// SetTitle updates the title of the native window. Must be called from the UI
-	// thread.
 	SetTitle(title string)
-
-	// SetSize updates native window size. See Hint constants.
 	SetSize(w int, h int, hint Hint)
-
-	// Navigate navigates webview to the given URL. URL may be a properly encoded data.
-	// URI. Examples:
-	// w.Navigate("https://github.com/webview/webview")
-	// w.Navigate("data:text/html,%3Ch1%3EHello%3C%2Fh1%3E")
-	// w.Navigate("data:text/html;base64,PGgxPkhlbGxvPC9oMT4=")
 	Navigate(url string)
-
-	// SetHtml sets the webview HTML directly.
-	// Example: w.SetHtml(w, "<h1>Hello</h1>");
 	SetHtml(html string)
-
-	// Init injects JavaScript code at the initialization of the new page. Every
-	// time the webview will open a the new page - this initialization code will
-	// be executed. It is guaranteed that code is executed before window.onload.
 	Init(js string)
-
-	// Eval evaluates arbitrary JavaScript code. Evaluation happens asynchronously,
-	// also the result of the expression is ignored. Use RPC bindings if you want
-	// to receive notifications about the results of the evaluation.
 	Eval(js string)
-
-	// Bind binds a callback function so that it will appear under the given name
-	// as a global JavaScript function. Internally it uses webview_init().
-	// Callback receives a request string and a user-provided argument pointer.
-	// Request string is a JSON array of all the arguments passed to the
-	// JavaScript function.
-	//
-	// f must be a function
-	// f must return either value and error or just error
 	Bind(name string, f interface{}) error
-
-	// Removes a callback that was previously set by Bind.
 	Unbind(name string) error
 }
 
+// ---------------------------------------------------------------------
+// Internal implementation
+// ---------------------------------------------------------------------
+
 type webview struct {
-	w C.webview_t
+	w C.webview_t // pointer type, nil == invalid
 }
 
 var (
@@ -142,53 +94,53 @@ func boolToInt(b bool) C.int {
 	return 0
 }
 
-// New calls NewWindow to create a new window and a new webview instance. If debug
-// is non-zero - developer tools will be enabled (if the platform supports them).
+// ---------------------------------------------------------------------
+// Factory functions
+// ---------------------------------------------------------------------
+
 func New(debug bool) WebView { return NewWindow(debug, nil) }
 
-// NewWindow creates a new webview instance. If debug is non-zero - developer
-// tools will be enabled (if the platform supports them). Window parameter can be
-// a pointer to the native window handle. If it's non-null - then child WebView is
-// embedded into the given parent window. Otherwise a new window is created.
-// Depending on the platform, a GtkWindow, NSWindow or HWND pointer can be passed
-// here.
 func NewWindow(debug bool, window unsafe.Pointer) WebView {
 	w := &webview{}
+	// C.webview_create returns a pointer; nil means failure
 	w.w = C.webview_create(boolToInt(debug), window)
 	return w
 }
 
+// ---------------------------------------------------------------------
+// WebView methods – all now compare w.w with nil
+// ---------------------------------------------------------------------
+
 func (w *webview) Destroy() {
-	// guard against nil/invalid webview handle to avoid calling into C with NULL
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	C.webview_destroy(w.w)
 }
 
 func (w *webview) Run() {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	C.webview_run(w.w)
 }
 
 func (w *webview) Terminate() {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	C.webview_terminate(w.w)
 }
 
 func (w *webview) Window() unsafe.Pointer {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return nil
 	}
 	return C.webview_get_window(w.w)
 }
 
 func (w *webview) Navigate(url string) {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	s := C.CString(url)
@@ -197,7 +149,7 @@ func (w *webview) Navigate(url string) {
 }
 
 func (w *webview) SetHtml(html string) {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	s := C.CString(html)
@@ -206,7 +158,7 @@ func (w *webview) SetHtml(html string) {
 }
 
 func (w *webview) SetTitle(title string) {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	s := C.CString(title)
@@ -215,14 +167,14 @@ func (w *webview) SetTitle(title string) {
 }
 
 func (w *webview) SetSize(width int, height int, hint Hint) {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	C.webview_set_size(w.w, C.int(width), C.int(height), C.webview_hint_t(hint))
 }
 
 func (w *webview) Init(js string) {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	s := C.CString(js)
@@ -231,7 +183,7 @@ func (w *webview) Init(js string) {
 }
 
 func (w *webview) Eval(js string) {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return
 	}
 	s := C.CString(js)
@@ -239,55 +191,44 @@ func (w *webview) Eval(js string) {
 	C.webview_eval(w.w, s)
 }
 
+// ---------------------------------------------------------------------
+// Dispatch (run Go func on UI thread)
+// ---------------------------------------------------------------------
+
 func (w *webview) Dispatch(f func()) {
-	// If the native webview is not available, run the function asynchronously
-	// instead of attempting to dispatch to the main thread via C.
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		go f()
 		return
 	}
 
 	m.Lock()
-	for ; dispatch[index] != nil; index++ {
+	for dispatch[index] != nil {
+		index++
 	}
 	dispatch[index] = f
 	m.Unlock()
+
 	C.CgoWebViewDispatch(w.w, C.uintptr_t(index))
 }
 
 //export _webviewDispatchGoCallback
-func _webviewDispatchGoCallback(index unsafe.Pointer) {
+func _webviewDispatchGoCallback(idx unsafe.Pointer) {
+	i := uintptr(idx)
 	m.Lock()
-	f := dispatch[uintptr(index)]
-	delete(dispatch, uintptr(index))
+	f := dispatch[i]
+	delete(dispatch, i)
 	m.Unlock()
-	f()
+	if f != nil {
+		f()
+	}
 }
 
-//export _webviewBindingGoCallback
-func _webviewBindingGoCallback(w C.webview_t, id *C.char, req *C.char, index uintptr) {
-	m.Lock()
-	f := bindings[uintptr(index)]
-	m.Unlock()
-	jsString := func(v interface{}) string { b, _ := json.Marshal(v); return string(b) }
-	status, result := 0, ""
-	if res, err := f(C.GoString(id), C.GoString(req)); err != nil {
-		status = -1
-		result = jsString(err.Error())
-	} else if b, err := json.Marshal(res); err != nil {
-		status = -1
-		result = jsString(err.Error())
-	} else {
-		status = 0
-		result = string(b)
-	}
-	s := C.CString(result)
-	defer C.free(unsafe.Pointer(s))
-	C.webview_return(w, id, C.int(status), s)
-}
+// ---------------------------------------------------------------------
+// Bind / Unbind
+// ---------------------------------------------------------------------
 
 func (w *webview) Bind(name string, f interface{}) error {
-	if w == nil || w.w == 0 {
+	if w == nil || w.w == nil {
 		return errors.New("webview not created")
 	}
 
@@ -305,15 +246,31 @@ func (w *webview) Bind(name string, f interface{}) error {
 	}
 
 	m.Lock()
-	for ; bindings[index] != nil; index++ {
+	for bindings[index] != nil {
+		index++
 	}
 	bindings[index] = binding
 	m.Unlock()
+
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	C.CgoWebViewBind(w.w, cname, C.uintptr_t(index))
 	return nil
 }
+
+func (w *webview) Unbind(name string) error {
+	if w == nil || w.w == nil {
+		return errors.New("webview not created")
+	}
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	C.CgoWebViewUnbind(w.w, cname)
+	return nil
+}
+
+// ---------------------------------------------------------------------
+// Binding helpers (unchanged, only tiny safety tweaks)
+// ---------------------------------------------------------------------
 
 func checkBindFuncSignature(v reflect.Value) error {
 	if v.Kind() != reflect.Func {
@@ -335,7 +292,7 @@ func parseBindArgs(v reflect.Value, req string) ([]reflect.Value, error) {
 	if (isVariadic && len(raw) < numIn-1) || (!isVariadic && len(raw) != numIn) {
 		return nil, errors.New("function arguments mismatch")
 	}
-	var args []reflect.Value
+	args := make([]reflect.Value, 0, len(raw))
 	for i := range raw {
 		var arg reflect.Value
 		if isVariadic && i >= numIn-1 {
@@ -378,12 +335,37 @@ func callBindFunc(v reflect.Value, args []reflect.Value) (interface{}, error) {
 	}
 }
 
-func (w *webview) Unbind(name string) error {
-	if w == nil || w.w == 0 {
-		return errors.New("webview not created")
+// ---------------------------------------------------------------------
+// Exported C callback for bindings
+// ---------------------------------------------------------------------
+
+//export _webviewBindingGoCallback
+func _webviewBindingGoCallback(w C.webview_t, id *C.char, req *C.char, idx uintptr) {
+	m.Lock()
+	f := bindings[idx]
+	m.Unlock()
+
+	jsString := func(v interface{}) string {
+		b, _ := json.Marshal(v)
+		return string(b)
 	}
-	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
-	C.CgoWebViewUnbind(w.w, cname)
-	return nil
+
+	status, result := 0, ""
+	if f == nil {
+		status = -1
+		result = jsString("binding not found")
+	} else if res, err := f(C.GoString(id), C.GoString(req)); err != nil {
+		status = -1
+		result = jsString(err.Error())
+	} else if b, err := json.Marshal(res); err != nil {
+		status = -1
+		result = jsString(err.Error())
+	} else {
+		status = 0
+		result = string(b)
+	}
+
+	s := C.CString(result)
+	defer C.free(unsafe.Pointer(s))
+	C.webview_return(w, id, C.int(status), s)
 }
