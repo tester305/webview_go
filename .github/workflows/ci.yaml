@@ -9,17 +9,14 @@ jobs:
       matrix:
         include:
           # -------------------------------------------------
-          # macOS-15 (latest – covers older Go)
+          # macOS-15 (latest – only Go 1.16+ for native arm64)
           # -------------------------------------------------
           - { image: macos-15, go: '1.18' }
           - { image: macos-15, go: '1.17' }
           - { image: macos-15, go: '1.16' }
-          - { image: macos-15, go: '1.15' }
-          - { image: macos-15, go: '1.14' }
-          - { image: macos-15, go: '1.13' }
 
           # -------------------------------------------------
-          # macOS-14 (stable – main platform)
+          # macOS-14 (stable – Go 1.19+)
           # -------------------------------------------------
           - { image: macos-14, go: '1.22' }
           - { image: macos-14, go: '1.21' }
@@ -27,17 +24,14 @@ jobs:
           - { image: macos-14, go: '1.19' }
 
           # -------------------------------------------------
-          # macOS-13 – special build flags for old Go
+          # macOS-13 (Intel – older Go 1.13–1.15 + DWARF fix)
           # -------------------------------------------------
-          - { image: macos-13, go: '1.18', dwarf_fix: true }
-          - { image: macos-13, go: '1.17', dwarf_fix: true }
-          - { image: macos-13, go: '1.16', dwarf_fix: true }
           - { image: macos-13, go: '1.15', dwarf_fix: true }
           - { image: macos-13, go: '1.14', dwarf_fix: true }
           - { image: macos-13, go: '1.13', dwarf_fix: true }
 
           # -------------------------------------------------
-          # Ubuntu 22.04 – GTK-3 / WebKit-4.1
+          # Ubuntu 22.04 – GTK-3 / WebKit-4.1 (all Go versions)
           # -------------------------------------------------
           - { image: ubuntu-22.04, go: '1.22', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
           - { image: ubuntu-22.04, go: '1.21', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
@@ -64,7 +58,7 @@ jobs:
           submodules: true
 
       # -------------------------------------------------
-      # Linux: deps + pkg-config fix
+      # Linux: install deps + pkg-config fix
       # -------------------------------------------------
       - name: Install Linux dependencies
         if: runner.os == 'Linux' && matrix.apt
@@ -85,11 +79,11 @@ jobs:
         run: echo "CGO_ENABLED=1" >> $GITHUB_ENV
 
       # -------------------------------------------------
-      # macOS-13: disable DWARF for old Go
+      # macOS-13: disable DWARF for old Go (1.13–1.15)
       # -------------------------------------------------
-      - name: Set DWARF fix for macOS-13 + old Go
+      - name: Disable DWARF on macOS-13 + old Go
         if: runner.os == 'macOS' && startsWith(matrix.image, 'macos-13') && matrix.dwarf_fix
-        run  : |
+        run: |
           echo "CGO_LDFLAGS=-ldflags=-w" >> $GITHUB_ENV
 
       # -------------------------------------------------
