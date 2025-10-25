@@ -9,7 +9,7 @@ jobs:
       matrix:
         include:
           # -------------------------------------------------
-          # macOS-15 (arm64) – Go 1.16+ only (native arm64)
+          # macOS-15 (arm64) – Go 1.16+ only
           # -------------------------------------------------
           - { image: macos-15, go: '1.18' }
           - { image: macos-15, go: '1.17' }
@@ -31,7 +31,7 @@ jobs:
           - { image: macos-13, go: '1.13', dwarf_fix: true }
 
           # -------------------------------------------------
-          # Ubuntu 22.04 – GTK-3 / WebKit-4.1 (all Go)
+          # Ubuntu 22.04 – GTK-3 / WebKit-4.1
           # -------------------------------------------------
           - { image: ubuntu-22.04, go: '1.22', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
           - { image: ubuntu-22.04, go: '1.21', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
@@ -58,7 +58,7 @@ jobs:
           submodules: true
 
       # -------------------------------------------------
-      # Linux: install deps + pkg-config fix
+      # Linux: deps + pkg-config fix
       # -------------------------------------------------
       - name: Install Linux dependencies
         if: runner.os == 'Linux' && matrix.apt
@@ -79,29 +79,20 @@ jobs:
         run: echo "CGO_ENABLED=1" >> $GITHUB_ENV
 
       # -------------------------------------------------
-      # macOS-13: disable DWARF for old Go (1.13–1.15)
-      # -------------------------------------------------
-      - name: Disable DWARF on macOS-13 + old Go
-        if: runner.os == 'macOS' && startsWith(matrix.image, 'macos-13') && matrix.dwarf_fix
-        run: |
-          echo "CGO_LDFLAGS=-ldflags=-w" >> $GITHUB_ENV
-
-      # -------------------------------------------------
-      # Use your fork
-      # -------------------------------------------------
-      - name: Replace webview-go fork
-        run: |
-          echo "replace github.com/webview/webview_go => github.com/tester305/webview_go latest" >> go.mod
-          go mod tidy
-          go mod vendor
-
-      # -------------------------------------------------
-      # Build & test
+      # Build examples – apply -ldflags=-w ONLY when needed
       # -------------------------------------------------
       - name: Build examples
         run: |
-          go build -ldflags=-w ./examples/basic
-          go build -ldflags=-w ./examples/bind
+          if [[ "${{ matrix.dwarf_fix }}" == "true" ]]; then
+            go build -ldflags=-w ./examples/basic
+            go build -ldflags=-w ./examples/bind
+          else
+            go build ./examples/basic
+            go build ./examples/bind
+          fi
 
+      # -------------------------------------------------
+      # Run tests
+      # -------------------------------------------------
       - name: Run tests
         run: go test -v ./...
