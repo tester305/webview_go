@@ -8,31 +8,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # -------------------------------------------------
           # macOS-15 (arm64) – Go 1.16+
-          # -------------------------------------------------
           - { image: macos-15, go: '1.18' }
           - { image: macos-15, go: '1.17' }
           - { image: macos-15, go: '1.16' }
 
-          # -------------------------------------------------
           # macOS-14 (arm64) – Go 1.19+
-          # -------------------------------------------------
           - { image: macos-14, go: '1.22' }
           - { image: macos-14, go: '1.21' }
           - { image: macos-14, go: '1.20' }
           - { image: macos-14, go: '1.19' }
 
-          # -------------------------------------------------
           # macOS-13 (x86_64) – Go 1.13–1.15 + DWARF fix
-          # -------------------------------------------------
           - { image: macos-13, go: '1.15', dwarf_fix: true }
           - { image: macos-13, go: '1.14', dwarf_fix: true }
           - { image: macos-13, go: '1.13', dwarf_fix: true }
 
-          # -------------------------------------------------
           # Ubuntu 22.04 – GTK-3 / WebKit-4.1
-          # -------------------------------------------------
           - { image: ubuntu-22.04, go: '1.22', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
           - { image: ubuntu-22.04, go: '1.21', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
           - { image: ubuntu-22.04, go: '1.20', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
@@ -44,9 +36,7 @@ jobs:
           - { image: ubuntu-22.04, go: '1.14', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
           - { image: ubuntu-22.04, go: '1.13', apt: libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config }
 
-          # -------------------------------------------------
           # Windows
-          # -------------------------------------------------
           - { image: windows-2022, go: '1.22' }
           - { image: windows-2022, go: '1.21' }
           - { image: windows-2022, go: '1.20' }
@@ -57,9 +47,7 @@ jobs:
         with:
           submodules: true
 
-      # -------------------------------------------------
       # Linux: deps + pkg-config fix
-      # -------------------------------------------------
       - name: Install Linux dependencies
         if: runner.os == 'Linux' && matrix.apt
         run: |
@@ -68,9 +56,7 @@ jobs:
           PKG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig"
           echo "PKG_CONFIG_PATH=$PKG_PATH:\$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
-      # -------------------------------------------------
       # Go setup
-      # -------------------------------------------------
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
@@ -78,36 +64,25 @@ jobs:
       - name: Enable CGO
         run: echo "CGO_ENABLED=1" >> $GITHUB_ENV
 
-      # -------------------------------------------------
-      # Replace fork BEFORE mod tidy/vendor
-      # -------------------------------------------------
+      # Replace fork BEFORE tidy/vendor
       - name: Replace webview-go fork
         run: |
           echo "replace github.com/webview/webview_go => github.com/tester305/webview_go latest" >> go.mod
           go mod tidy
           go mod vendor
 
-      # -------------------------------------------------
-      # Build examples – cross-platform DWARF fix
-      # -------------------------------------------------
+      # Build examples – CROSS-PLATFORM
       - name: Build examples
-        shell: >-
-          ${{ 
-            runner.os == 'Windows' && 'pwsh' || 
-            'bash {0}'
-          }}
+        shell: ${{ runner.os == 'Windows' && 'pwsh' || 'bash {0}' }}
         run: |
-          $dwarf = "${{ matrix.dwarf_fix }}" -eq "true"
-          if ($dwarf) {
+          if [[ "${{ matrix.dwarf_fix }}" == "true" ]] || [ "${{ matrix.dwarf_fix }}" = "true" ]; then
             go build -ldflags=-w ./examples/basic
             go build -ldflags=-w ./examples/bind
-          } else {
+          else
             go build ./examples/basic
             go build ./examples/bind
-          }
+          fi
 
-      # -------------------------------------------------
       # Run tests
-      # -------------------------------------------------
       - name: Run tests
         run: go test -v ./...
