@@ -159,56 +159,94 @@ func NewWindow(debug bool, window unsafe.Pointer) WebView {
 }
 
 func (w *webview) Destroy() {
+	// guard against nil/invalid webview handle to avoid calling into C with NULL
+	if w == nil || w.w == 0 {
+		return
+	}
 	C.webview_destroy(w.w)
 }
 
 func (w *webview) Run() {
+	if w == nil || w.w == 0 {
+		return
+	}
 	C.webview_run(w.w)
 }
 
 func (w *webview) Terminate() {
+	if w == nil || w.w == 0 {
+		return
+	}
 	C.webview_terminate(w.w)
 }
 
 func (w *webview) Window() unsafe.Pointer {
+	if w == nil || w.w == 0 {
+		return nil
+	}
 	return C.webview_get_window(w.w)
 }
 
 func (w *webview) Navigate(url string) {
+	if w == nil || w.w == 0 {
+		return
+	}
 	s := C.CString(url)
 	defer C.free(unsafe.Pointer(s))
 	C.webview_navigate(w.w, s)
 }
 
 func (w *webview) SetHtml(html string) {
+	if w == nil || w.w == 0 {
+		return
+	}
 	s := C.CString(html)
 	defer C.free(unsafe.Pointer(s))
 	C.webview_set_html(w.w, s)
 }
 
 func (w *webview) SetTitle(title string) {
+	if w == nil || w.w == 0 {
+		return
+	}
 	s := C.CString(title)
 	defer C.free(unsafe.Pointer(s))
 	C.webview_set_title(w.w, s)
 }
 
 func (w *webview) SetSize(width int, height int, hint Hint) {
+	if w == nil || w.w == 0 {
+		return
+	}
 	C.webview_set_size(w.w, C.int(width), C.int(height), C.webview_hint_t(hint))
 }
 
 func (w *webview) Init(js string) {
+	if w == nil || w.w == 0 {
+		return
+	}
 	s := C.CString(js)
 	defer C.free(unsafe.Pointer(s))
 	C.webview_init(w.w, s)
 }
 
 func (w *webview) Eval(js string) {
+	if w == nil || w.w == 0 {
+		return
+	}
 	s := C.CString(js)
 	defer C.free(unsafe.Pointer(s))
 	C.webview_eval(w.w, s)
 }
 
 func (w *webview) Dispatch(f func()) {
+	// If the native webview is not available, run the function asynchronously
+	// instead of attempting to dispatch to the main thread via C.
+	if w == nil || w.w == 0 {
+		go f()
+		return
+	}
+
 	m.Lock()
 	for ; dispatch[index] != nil; index++ {
 	}
@@ -249,6 +287,10 @@ func _webviewBindingGoCallback(w C.webview_t, id *C.char, req *C.char, index uin
 }
 
 func (w *webview) Bind(name string, f interface{}) error {
+	if w == nil || w.w == 0 {
+		return errors.New("webview not created")
+	}
+
 	v := reflect.ValueOf(f)
 	if err := checkBindFuncSignature(v); err != nil {
 		return err
@@ -337,6 +379,9 @@ func callBindFunc(v reflect.Value, args []reflect.Value) (interface{}, error) {
 }
 
 func (w *webview) Unbind(name string) error {
+	if w == nil || w.w == 0 {
+		return errors.New("webview not created")
+	}
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	C.CgoWebViewUnbind(w.w, cname)
