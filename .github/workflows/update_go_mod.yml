@@ -1,0 +1,32 @@
+name: Auto Update Go Modules
+
+on:
+  push:
+    branches:
+      - master  # or your main branch
+
+jobs:
+  update-go-modules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.2'  # match your project version
+
+      - name: Tidy go.mod and go.sum
+        run: |
+          go mod tidy
+
+      - name: Commit updated go.mod and go.sum
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add go.mod go.sum
+          git commit -m "Auto-update go.mod and go.sum"
+          git push
+        continue-on-error: true  # avoids failure if nothing changed
