@@ -29,10 +29,10 @@ jobs:
             echo "Updating go.mod..."
             sed -i "s|replace github.com/webview/webview_go => .*|replace github.com/webview/webview_go => github.com/tester305/webview_go $PSEUDO_VERSION|" go.mod
             sed -i "s|require github.com/webview/webview_go .*|require github.com/webview/webview_go $PSEUDO_VERSION|" go.mod
-            echo "Update complete."
+            echo "UPDATE_NEEDED=true" >> $GITHUB_ENV
           else
-            echo "No update needed. Pseudo-version is already current."
-            echo "SKIP_COMMIT=true" >> $GITHUB_ENV
+            echo "No update needed."
+            echo "UPDATE_NEEDED=false" >> $GITHUB_ENV
           fi
 
       - name: Set up Go
@@ -41,11 +41,18 @@ jobs:
           go-version: '1.22.2'
 
       - name: Tidy go.mod and go.sum
+        if: env.UPDATE_NEEDED == 'true'
         run: go mod tidy
 
       - name: Commit and push changes
-        if: env.SKIP_COMMIT != 'true'
+        if: env.UPDATE_NEEDED == 'true'
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add go.mod go.sum
+          git commit -m "Auto-update webview_go pseudo-version"
+          git push
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add go.mod go.sum
