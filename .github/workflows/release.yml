@@ -11,6 +11,7 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -29,8 +30,6 @@ jobs:
             goos: windows
             goarch: arm64
 
-      fail-fast: false
-
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -42,6 +41,9 @@ jobs:
         with:
           go-version: '1.23'
 
+      # -------------------------
+      # Install dependencies
+      # -------------------------
       - name: Install dependencies (Linux)
         if: matrix.goos == 'linux'
         run: |
@@ -58,18 +60,40 @@ jobs:
         if: matrix.goos == 'windows'
         run: choco install -y zip
 
+      # -------------------------
+      # Skip unsupported builds
+      # -------------------------
       - name: Skip unsupported builds
         if: |
           (matrix.goos == 'linux' && matrix.goarch == 'arm64') ||
           (matrix.goos == 'windows' && matrix.goarch == 'arm64')
         run: echo "Skipping unsupported build for ${{ matrix.goos }} ${{ matrix.goarch }}" && exit 0
 
-      - name: Build
+      # -------------------------
+      # Build step (Unix)
+      # -------------------------
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
           mkdir -p dist
           OUTPUT="dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}"
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o "$OUTPUT"
 
+      # -------------------------
+      # Build step (Windows)
+      # -------------------------
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          mkdir dist
+          $output = "dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}.exe"
+          go build -v -o $output
+
+      # -------------------------
+      # Upload artifacts
+      # -------------------------
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
