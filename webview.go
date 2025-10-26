@@ -56,6 +56,7 @@ const (
 	HintFixed Hint = C.WEBVIEW_HINT_FIXED
 	HintMin   Hint = C.WEBVIEW_HINT_MIN
 	HintMax   Hint = C.WEBVIEW_HINT_MAX
+
 // WebView wraps the native webview instance.
 )
 
