@@ -17,18 +17,12 @@ jobs:
           - os: ubuntu-latest
             goos: linux
             goarch: amd64
-          - os: ubuntu-latest
-            goos: linux
-            goarch: arm64
           - os: macos-latest
             goos: darwin
             goarch: amd64
           - os: windows-latest
             goos: windows
             goarch: amd64
-          - os: windows-latest
-            goos: windows
-            goarch: arm64
 
     runs-on: ${{ matrix.os }}
 
@@ -44,33 +38,24 @@ jobs:
       # -------------------------
       # Install dependencies
       # -------------------------
-      - name: Install dependencies (Linux)
+      - name: Install Linux dependencies
         if: matrix.goos == 'linux'
         run: |
           sudo apt update
           sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev zip
 
-      - name: Install dependencies (macOS)
+      - name: Install macOS dependencies
         if: matrix.goos == 'darwin'
         run: |
           brew update
           brew install pkg-config zip
 
-      - name: Install dependencies (Windows)
+      - name: Install Windows dependencies
         if: matrix.goos == 'windows'
         run: choco install -y zip
 
       # -------------------------
-      # Skip unsupported builds
-      # -------------------------
-      - name: Skip unsupported builds
-        if: |
-          (matrix.goos == 'linux' && matrix.goarch == 'arm64') ||
-          (matrix.goos == 'windows' && matrix.goarch == 'arm64')
-        run: echo "Skipping unsupported build for ${{ matrix.goos }} ${{ matrix.goarch }}" && exit 0
-
-      # -------------------------
-      # Build step (Unix)
+      # Build (Unix)
       # -------------------------
       - name: Build (Unix)
         if: runner.os != 'Windows'
@@ -78,10 +63,10 @@ jobs:
         run: |
           mkdir -p dist
           OUTPUT="dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}"
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o "$OUTPUT"
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=1 go build -v -o "$OUTPUT"
 
       # -------------------------
-      # Build step (Windows)
+      # Build (Windows)
       # -------------------------
       - name: Build (Windows)
         if: runner.os == 'Windows'
@@ -89,6 +74,9 @@ jobs:
         run: |
           mkdir dist
           $output = "dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}.exe"
+          $env:GOOS = "${{ matrix.goos }}"
+          $env:GOARCH = "${{ matrix.goarch }}"
+          $env:CGO_ENABLED = "1"
           go build -v -o $output
 
       # -------------------------
