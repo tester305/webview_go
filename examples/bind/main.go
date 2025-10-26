@@ -16,6 +16,8 @@ const html = `<button id="increment">Tap me</button>
   });
 </script>`
 
+// IncrementResult holds the result of a counter increment.
+// IncrementResult holds the result of a counter increment.
 type IncrementResult struct {
 	Count uint `json:"count"`
 }
@@ -33,6 +35,6 @@ func main() {
 		return IncrementResult{Count: count}
 	})
 
-	w.SetHtml(html)
+	w.SetHTML(html)
 	w.Run()
 }

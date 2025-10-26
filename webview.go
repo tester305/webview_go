@@ -32,7 +32,7 @@ import (
 	"sync"
 	"unsafe"
 
-	_ "github.com/webview/webview_go/libs/mswebview2"
+	_ "github.com/webview/webview_go/libs/mswebview2" // required for CGO side effects in non-main package
 	_ "github.com/webview/webview_go/libs/mswebview2/include"
 	_ "github.com/webview/webview_go/libs/webview"
 	_ "github.com/webview/webview_go/libs/webview/include"
@@ -47,15 +47,19 @@ func init() {
 // Public constants & types
 // ---------------------------------------------------------------------
 
+// Hint represents a sizing hint for the webview window.
 type Hint int
 
+// HintNone disables window resizing hints.
 const (
 	HintNone  Hint = C.WEBVIEW_HINT_NONE
 	HintFixed Hint = C.WEBVIEW_HINT_FIXED
 	HintMin   Hint = C.WEBVIEW_HINT_MIN
 	HintMax   Hint = C.WEBVIEW_HINT_MAX
+// WebView wraps the native webview instance.
 )
 
+// WebView wraps the native webview instance.
 type WebView interface {
 	Run()
 	Terminate()
@@ -65,7 +69,7 @@ type WebView interface {
 	SetTitle(title string)
 	SetSize(w int, h int, hint Hint)
 	Navigate(url string)
-	SetHtml(html string)
+	SetHTML(html string)
 	Init(js string)
 	Eval(js string)
 	Bind(name string, f interface{}) error
@@ -95,11 +99,16 @@ func boolToInt(b bool) C.int {
 }
 
 // ---------------------------------------------------------------------
+// New creates a new WebView instance.
 // Factory functions
+// NewWindow creates a new WebView with a window.
 // ---------------------------------------------------------------------
+// New creates a new WebView instance.
 
+// New returns a new WebView by calling NewWindow with a nil window.
 func New(debug bool) WebView { return NewWindow(debug, nil) }
 
+// NewWindow creates a new WebView with a window.
 func NewWindow(debug bool, window unsafe.Pointer) WebView {
 	w := &webview{}
 	// C.webview_create returns a pointer; nil means failure
@@ -148,7 +157,7 @@ func (w *webview) Navigate(url string) {
 	C.webview_navigate(w.w, s)
 }
 
-func (w *webview) SetHtml(html string) {
+func (w *webview) SetHTML(html string) {
 	if w == nil || w.w == nil {
 		return
 	}
