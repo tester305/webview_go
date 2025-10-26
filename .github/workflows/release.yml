@@ -12,11 +12,26 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [linux, windows, darwin]
-        arch: [amd64, arm64]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+          - os: windows-latest
+            goos: windows
+            goarch: arm64
+
       fail-fast: false
 
-    runs-on: ${{ matrix.os == 'windows' && 'windows-latest' || matrix.os == 'darwin' && 'macos-latest' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repository
@@ -27,54 +42,39 @@ jobs:
         with:
           go-version: '1.23'
 
-      # -------------------------
-      # Install dependencies
-      # -------------------------
       - name: Install dependencies (Linux)
-        if: matrix.os == 'linux'
+        if: matrix.goos == 'linux'
         run: |
           sudo apt update
           sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev zip
 
       - name: Install dependencies (macOS)
-        if: matrix.os == 'darwin'
+        if: matrix.goos == 'darwin'
         run: |
           brew update
           brew install pkg-config zip
-          export CC=clang
-          export CXX=clang++
 
       - name: Install dependencies (Windows)
-        if: matrix.os == 'windows'
-        run: |
-          choco install -y zip mingw
-          setx CC x86_64-w64-mingw32-gcc
-          setx CXX x86_64-w64-mingw32-g++
+        if: matrix.goos == 'windows'
+        run: choco install -y zip
 
-      # -------------------------
-      # Skip unwanted combinations
-      # -------------------------
       - name: Skip unsupported builds
-        if: (matrix.os == 'linux' && matrix.arch == 'arm64') || (matrix.os == 'windows' && matrix.arch == 'arm64')
-        run: echo "Skipping unsupported build for ${{ matrix.os }} ${{ matrix.arch }}" && exit 0
+        if: |
+          (matrix.goos == 'linux' && matrix.goarch == 'arm64') ||
+          (matrix.goos == 'windows' && matrix.goarch == 'arm64')
+        run: echo "Skipping unsupported build for ${{ matrix.goos }} ${{ matrix.goarch }}" && exit 0
 
-      # -------------------------
-      # Build step
-      # -------------------------
       - name: Build
         run: |
           mkdir -p dist
-          OUTPUT="dist/webview_go-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}"
-          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -v -o "$OUTPUT"
+          OUTPUT="dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}"
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o "$OUTPUT"
 
-      # -------------------------
-      # Upload artifacts
-      # -------------------------
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: webview_go-${{ matrix.os }}-${{ matrix.arch }}
-          path: dist/webview_go-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+          name: webview_go-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
 
   release:
     needs: build
