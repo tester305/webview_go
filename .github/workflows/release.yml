@@ -1,9 +1,12 @@
 name: Continuous Build
 
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for release (e.g., continuous-second)'
+        required: true
+        default: 'continuous-second'
 
 permissions:
   contents: write
@@ -35,9 +38,6 @@ jobs:
         with:
           go-version: '1.23'
 
-      # -------------------------
-      # Install dependencies
-      # -------------------------
       - name: Install Linux dependencies
         if: matrix.goos == 'linux'
         run: |
@@ -54,9 +54,6 @@ jobs:
         if: matrix.goos == 'windows'
         run: echo "Skipping zip install—PowerShell has native zip support"
 
-      # -------------------------
-      # Build (Unix)
-      # -------------------------
       - name: Build (Unix)
         if: runner.os != 'Windows'
         shell: bash
@@ -65,9 +62,6 @@ jobs:
           OUTPUT="dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}"
           GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=1 go build -v -o "$OUTPUT"
 
-      # -------------------------
-      # Build (Windows)
-      # -------------------------
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -79,9 +73,6 @@ jobs:
           $env:CGO_ENABLED = "1"
           go build -v -o $output
 
-      # -------------------------
-      # Upload artifacts
-      # -------------------------
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -92,23 +83,41 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create or update tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git fetch --tags
+          git tag -f "${{ github.event.inputs.tag_name }}"
+          git push origin --force "refs/tags/${{ github.event.inputs.tag_name }}"
+
+      - name: Extract ordinal title
+        id: title
+        run: |
+          tag="${{ github.event.inputs.tag_name }}"
+          ordinal=$(echo "$tag" | sed 's/^continuous-//' | tr '[:lower:]' '[:upper:]')
+          echo "release_title=${ordinal^} Continuous Build" >> $GITHUB_OUTPUT
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./dist
 
-      - name: Create or Update Continuous Build Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: continuous
-          name: "Continuous Build"
+          tag_name: ${{ github.event.inputs.tag_name }}
+          name: ${{ steps.title.outputs.release_title }}
           body: |
             Latest cross-platform build of webview_go.
             ✅ Linux amd64
             ✅ macOS amd64
             ✅ Windows amd64
-            ❌ Skipped: arm64 targets and broken dependencies
           files: ./dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
