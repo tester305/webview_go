@@ -50,7 +50,7 @@ func init() {
 type Hint int
 
 const (
-	HintNone Hint = C.WEBVIEW_HINT_NONE
+	HintNone  Hint = C.WEBVIEW_HINT_NONE
 	HintFixed Hint = C.WEBVIEW_HINT_FIXED
 	HintMin   Hint = C.WEBVIEW_HINT_MIN
 	HintMax   Hint = C.WEBVIEW_HINT_MAX
