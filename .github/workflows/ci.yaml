@@ -63,12 +63,8 @@ jobs:
       - name: Enable CGO
         run: echo "CGO_ENABLED=1" >> $GITHUB_ENV
 
-      - name: Replace webview-go fork
-        run: |
-          sed -i '/^replace github.com\/webview\/webview_go/d' go.mod
-          echo "replace github.com/webview/webview_go => github.com/tester305/webview_go latest" >> go.mod
-          go mod tidy
-          go mod vendor
+      - name: Skip replace fork (already patched)
+        run: echo "The newer builds have a modified go.mod that's already fixed. Skipping."
 
       - name: Build examples
         shell: bash
