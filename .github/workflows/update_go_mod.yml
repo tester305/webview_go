@@ -14,7 +14,7 @@ jobs:
       - name: Checkout main project
         uses: actions/checkout@v4
 
-      - name: Fetch latest commit from webview_go and update go.mod
+      - name: Fetch latest commit from tester305/webview_go and update go.mod
         run: |
           LATEST_HASH=$(git ls-remote https://github.com/tester305/webview_go.git refs/heads/master | cut -f1)
           COMMIT_DATE=$(curl -s https://api.github.com/repos/tester305/webview_go/commits/$LATEST_HASH | jq -r '.commit.committer.date')
@@ -57,3 +57,4 @@ jobs:
           git add go.mod go.sum
           git diff --cached --quiet || git commit -m "Auto-update tester305/webview_go pseudo-version"
           git push
+
