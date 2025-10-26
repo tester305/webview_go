@@ -14,7 +14,7 @@ jobs:
       - name: Checkout main project
         uses: actions/checkout@v4
 
-      - name: Fetch latest commit from webview_go
+      - name: Fetch latest commit from webview_go and update go.mod
         run: |
           LATEST_HASH=$(git ls-remote https://github.com/tester305/webview_go.git refs/heads/master | cut -f1)
           COMMIT_DATE=$(curl -s https://api.github.com/repos/tester305/webview_go/commits/$LATEST_HASH | jq -r '.commit.committer.date')
@@ -22,9 +22,18 @@ jobs:
           PSEUDO_VERSION="v0.0.0-${UTC_DATE}-${LATEST_HASH:0:12}"
           echo "Latest pseudo-version: $PSEUDO_VERSION"
 
-          # Update go.mod
-          sed -i "s|replace github.com/webview/webview_go => .*|replace github.com/webview/webview_go => github.com/tester305/webview_go $PSEUDO_VERSION|" go.mod
-          sed -i "s|require github.com/webview/webview_go .*|require github.com/webview/webview_go $PSEUDO_VERSION|" go.mod
+          CURRENT_VERSION=$(grep 'replace github.com/webview/webview_go =>' go.mod | awk '{print $5}')
+          echo "Current pseudo-version: $CURRENT_VERSION"
+
+          if [ "$PSEUDO_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Updating go.mod..."
+            sed -i "s|replace github.com/webview/webview_go => .*|replace github.com/webview/webview_go => github.com/tester305/webview_go $PSEUDO_VERSION|" go.mod
+            sed -i "s|require github.com/webview/webview_go .*|require github.com/webview/webview_go $PSEUDO_VERSION|" go.mod
+            echo "Update complete."
+          else
+            echo "No update needed. Pseudo-version is already current."
+            echo "SKIP_COMMIT=true" >> $GITHUB_ENV
+          fi
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -35,6 +44,7 @@ jobs:
         run: go mod tidy
 
       - name: Commit and push changes
+        if: env.SKIP_COMMIT != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
