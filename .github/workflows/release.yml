@@ -32,7 +32,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt update
-          sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+          sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev g++ gcc
 
       # macOS dependencies
       - name: Install dependencies (macOS)
