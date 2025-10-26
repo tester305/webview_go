@@ -1,12 +1,10 @@
 name: Continuous Build
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Tag name for release (e.g., continuous-second)'
-        required: true
-        default: 'continuous-second'
 
 permissions:
   contents: write
@@ -86,20 +84,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create or update tag
+      - name: Generate next tag and title
+        id: tagger
         run: |
+          git fetch --tags
+          latest=$(git tag | grep '^continuous-' | sort -V | tail -n1)
+          if [ -z "$latest" ]; then
+            next_tag="continuous-1"
+            title="1 Continuous Build"
+          else
+            base=$(echo "$latest" | sed 's/^continuous-//' | cut -d. -f1)
+            sub=$(echo "$latest" | sed 's/^continuous-//' | cut -s -d. -f2)
+            if [ -z "$sub" ]; then
+              num=$((base + 1))
+              if [ "$num" -gt 1000 ]; then
+                next_tag="continuous-1.1"
+                title="1.1 Continuous Build"
+              else
+                next_tag="continuous-$num"
+                title="$num Continuous Build"
+              fi
+            else
+              major=$base
+              minor=$((sub + 1))
+              next_tag="continuous-$major.$minor"
+              title="$major.$minor Continuous Build"
+            fi
+          fi
+          echo "next_tag=$next_tag" >> $GITHUB_OUTPUT
+          echo "release_title=$title" >> $GITHUB_OUTPUT
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git fetch --tags
-          git tag -f "${{ github.event.inputs.tag_name }}"
-          git push origin --force "refs/tags/${{ github.event.inputs.tag_name }}"
-
-      - name: Extract ordinal title
-        id: title
-        run: |
-          tag="${{ github.event.inputs.tag_name }}"
-          ordinal=$(echo "$tag" | sed 's/^continuous-//' | tr '[:lower:]' '[:upper:]')
-          echo "release_title=${ordinal^} Continuous Build" >> $GITHUB_OUTPUT
+          git tag -f "$next_tag"
+          git push origin --force "refs/tags/$next_tag"
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -109,8 +126,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name }}
-          name: ${{ steps.title.outputs.release_title }}
+          tag_name: ${{ steps.tagger.outputs.next_tag }}
+          name: ${{ steps.tagger.outputs.release_title }}
           body: |
             Latest cross-platform build of webview_go.
             ✅ Linux amd64
