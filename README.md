@@ -1,6 +1,8 @@
 # webview_go
 > [!NOTE]
 > this is tested and works now
+
+
 [![GoDoc](https://godoc.org/github.com/tester305/webview_go?status.svg)](https://godoc.org/github.com/tester305/webview_go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tester305/webview_go)](https://goreportcard.com/report/github.com/tester305/webview_go)
 
@@ -28,7 +30,7 @@ go mod init example.com/app
 Save one of the example programs into your project directory.
 
 ```bash
-curl -sSLo main.go "https://raw.githubusercontent.com/webview/webview_go/master/examples/basic/main.go"
+curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/basic/main.go"
 ```
 
 Install dependencies.
