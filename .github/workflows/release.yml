@@ -2,8 +2,8 @@ name: Continuous Build
 
 on:
   push:
-    branches: [master]
-  workflow_dispatch:
+    branches:
+      - master
 
 permissions:
   contents: write
@@ -12,20 +12,11 @@ jobs:
   build:
     strategy:
       matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
+        os: [linux, windows, darwin]
+        arch: [amd64, arm64]
       fail-fast: false
 
-    runs-on: ${{ matrix.goos == 'windows' && 'windows-latest' || matrix.goos == 'darwin' && 'macos-latest' || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os == 'windows' && 'windows-latest' || matrix.os == 'darwin' && 'macos-latest' || 'ubuntu-latest' }}
 
     steps:
       - name: Checkout repository
@@ -36,81 +27,60 @@ jobs:
         with:
           go-version: '1.23'
 
-      # Linux dependencies
+      # -------------------------
+      # Install dependencies
+      # -------------------------
       - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
+        if: matrix.os == 'linux'
         run: |
           sudo apt update
           sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev zip
 
-      # macOS dependencies
       - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
+        if: matrix.os == 'darwin'
         run: |
-          xcode-select --install || true
           brew update
-          brew install pkg-config gtk+3 zip
-        shell: bash
+          brew install pkg-config zip
+          export CC=clang
+          export CXX=clang++
 
-      # Windows dependencies (MinGW winlibs)
-      - name: Install MinGW (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows'
         run: |
-          Invoke-WebRequest -Uri https://github.com/brechtsanders/winlibs_mingw/releases/download/15.2.0posix-13.0.0-ucrt-r2/winlibs-i686-posix-dwarf-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2.zip -OutFile winlibs.zip
-          Expand-Archive winlibs.zip -DestinationPath C:\mingw
-          $env:PATH = "C:\mingw\winlibs-i686-posix-dwarf-gcc-15.2.0-mingw-w64ucrt-13.0.0-r2\bin;$env:PATH"
-          $env:CC="gcc"
-          $env:CXX="g++"
+          choco install -y zip mingw
+          setx CC x86_64-w64-mingw32-gcc
+          setx CXX x86_64-w64-mingw32-g++
 
-      # Build binary (Windows)
-      - name: Build binary (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $env:GOOS = "windows"
-          $env:GOARCH = "${{ matrix.goarch }}"
-          go build -v -o "webview_go-windows-${{ matrix.goarch }}.exe"
+      # -------------------------
+      # Skip unwanted combinations
+      # -------------------------
+      - name: Skip unsupported builds
+        if: (matrix.os == 'linux' && matrix.arch == 'arm64') || (matrix.os == 'windows' && matrix.arch == 'arm64')
+        run: echo "Skipping unsupported build for ${{ matrix.os }} ${{ matrix.arch }}" && exit 0
 
-      # Package binary (Windows)
-      - name: Package binary (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          mkdir dist
-          Compress-Archive -Path "webview_go-windows-${{ matrix.goarch }}.exe" -DestinationPath "dist/webview_go-windows-${{ matrix.goarch }}.zip"
-
-      # Build binary (Linux/macOS)
-      - name: Build binary (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -v -o "webview_go-${{ matrix.goos }}-${{ matrix.goarch }}"
-
-      # Package binaries into .zip (Linux/macOS)
-      - name: Package binary into .zip (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
+      # -------------------------
+      # Build step
+      # -------------------------
+      - name: Build
         run: |
           mkdir -p dist
-          zip -j dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}.zip webview_go-${{ matrix.goos }}-${{ matrix.goarch }}
+          OUTPUT="dist/webview_go-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}"
+          GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -v -o "$OUTPUT"
 
-      # Upload artifacts for Actions
-      - name: Upload artifact
+      # -------------------------
+      # Upload artifacts
+      # -------------------------
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: webview_go-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/*.zip
+          name: webview_go-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/webview_go-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download built zips
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./dist
@@ -121,6 +91,6 @@ jobs:
           tag_name: continuous
           name: "Continuous Build"
           body: "Latest cross-platform build of webview_go (auto-updated on push)."
-          files: ./dist/*.zip
+          files: ./dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
