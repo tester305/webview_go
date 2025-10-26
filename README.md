@@ -1,0 +1,53 @@
+# webview_go
+> [!NOTE]
+> this is tested and works now
+
+
+[![GoDoc](https://godoc.org/github.com/tester305/webview_go?status.svg)](https://godoc.org/github.com/tester305/webview_go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tester305/webview_go)](https://goreportcard.com/report/github.com/tester305/webview_go)
+
+Go language binding for the [webview library][webview].
+
+> [!NOTE]
+> Versions <= 0.1.1 are available in the [old repository][webview].
+
+### Getting Started
+
+See [Go package documentation][go-docs] for the Go API documentation, or simply read the source code.
+
+Start with creating a new directory structure for your project.
+
+```bash
+mkdir my-project && cd my-project
+```
+
+Create a new Go module.
+
+```bash
+go mod init example.com/app
+```
+
+Save one of the example programs into your project directory.
+
+```bash
+curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/basic/main.go"
+```
+
+Install dependencies.
+
+```bash
+go get github.com/tester305/webview_go
+```
+
+Build the example. On Windows, add `-ldflags="-H windowsgui"` to the command line.
+
+```bash
+go build
+```
+
+### Notes
+
+Calling `Eval()` or `Dispatch()` before `Run()` does not work because the webview instance has only been configured and not yet started.
+
+[go-docs]: https://pkg.go.dev/github.com/tester305/webview_go
+[webview]: https://github.com/webview/webview
