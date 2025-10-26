@@ -2,11 +2,11 @@ name: Continuous Build
 
 on:
   push:
-    branches: [master]       # your default branch
-  workflow_dispatch:         # allows manual runs
+    branches: [master]
+  workflow_dispatch:
 
 permissions:
-  contents: write            # needed for release creation
+  contents: write
 
 jobs:
   build:
@@ -27,16 +27,17 @@ jobs:
         with:
           go-version: '1.23'
 
-      - name: Install dependencies (Linux/macOS)
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
-          if [[ "${{ matrix.goos }}" == "linux" ]]; then
-            sudo apt update
-            sudo apt install -y pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
-          fi
-          if [[ "${{ matrix.goos }}" == "darwin" ]]; then
-            brew update
-            brew install gtk+3 webkit2gtk
-          fi
+          sudo apt update
+          sudo apt install -y build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install pkg-config gtk+3
         shell: bash
 
       - name: Build binary
@@ -50,26 +51,31 @@ jobs:
           fi
         shell: bash
 
-      - name: Upload artifact (Windows)
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: webview_go-windows-${{ matrix.goarch }}
-          path: webview_go-windows-${{ matrix.goarch }}.exe
+      - name: Package binary into .zip
+        run: |
+          mkdir -p dist
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            zip -j dist/webview_go-windows-${{ matrix.goarch }}.zip webview_go-windows-${{ matrix.goarch }}.exe
+          else
+            zip -j dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}.zip webview_go-${{ matrix.goos }}-${{ matrix.goarch }}
+          fi
+        shell: bash
 
-      - name: Upload artifact (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Upload artifact for Actions
         uses: actions/upload-artifact@v4
         with:
           name: webview_go-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: webview_go-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*.zip
 
   release:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download artifacts
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download built zips
         uses: actions/download-artifact@v4
         with:
           path: ./dist
@@ -80,6 +86,6 @@ jobs:
           tag_name: continuous
           name: "Continuous Build"
           body: "Latest cross-platform build of webview_go (auto-updated on push)."
-          files: ./dist/**
+          files: ./dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
