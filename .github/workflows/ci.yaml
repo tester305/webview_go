@@ -1,4 +1,5 @@
 name: CI Pipeline
+
 on: [push, pull_request]
 
 jobs:
@@ -8,12 +9,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-            # macOS-latest – Go 1.22+
+          # macOS-latest – Go 1.22+
           - { image: macos-latest, go: '1.22' }
           - { image: macos-latest, go: '1.21' }
           - { image: macos-latest, go: '1.20' }
           - { image: macos-latest, go: '1.19' }
-          
+
           # macOS-15 (arm64) – Go 1.16+
           - { image: macos-15, go: '1.18' }
           - { image: macos-15, go: '1.17' }
@@ -64,6 +65,7 @@ jobs:
 
       - name: Replace webview-go fork
         run: |
+          sed -i '/^replace github.com\/webview\/webview_go/d' go.mod
           echo "replace github.com/webview/webview_go => github.com/tester305/webview_go latest" >> go.mod
           go mod tidy
           go mod vendor
