@@ -63,6 +63,9 @@ jobs:
       - name: Enable CGO
         run: echo "CGO_ENABLED=1" >> $GITHUB_ENV
 
+      - name: Run go mod tidy
+        run: go mod tidy
+
       - name: Skip replace fork (already patched)
         run: echo "The newer builds have a modified go.mod that's already fixed. Skipping."
 
