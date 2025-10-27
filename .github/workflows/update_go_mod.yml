@@ -22,21 +22,21 @@ jobs:
           PSEUDO_VERSION="v0.0.0-${UTC_DATE}-${LATEST_HASH:0:12}"
           echo "Latest pseudo-version: $PSEUDO_VERSION"
 
-          # Check if require directive exists
-          if grep -q "require github.com/tester305/webview_go" go.mod; then
-            CURRENT_VERSION=$(grep 'require github.com/tester305/webview_go' go.mod | awk '{print $2}')
+          # Check if replace directive exists
+          if grep -q "replace github.com/tester305/webview_go" go.mod; then
+            CURRENT_VERSION=$(grep 'replace github.com/tester305/webview_go' go.mod | awk '{print $4}')
             if [ "$PSEUDO_VERSION" != "$CURRENT_VERSION" ]; then
-              echo "Updating require directive..."
-              sed -i "s|require github.com/tester305/webview_go .*|require github.com/tester305/webview_go $PSEUDO_VERSION|" go.mod
+              echo "Updating replace directive..."
+              sed -i "s|replace github.com/tester305/webview_go .*|replace github.com/tester305/webview_go => github.com/tester305/webview_go $PSEUDO_VERSION|" go.mod
               echo "UPDATE_NEEDED=true" >> $GITHUB_ENV
             else
-              echo "Require directive already up to date."
+              echo "Replace directive already up to date."
               echo "UPDATE_NEEDED=false" >> $GITHUB_ENV
             fi
           else
-            echo "Injecting new require directive..."
+            echo "Injecting new replace directive..."
             echo "" >> go.mod
-            echo "require github.com/tester305/webview_go $PSEUDO_VERSION" >> go.mod
+            echo "replace github.com/tester305/webview_go => github.com/tester305/webview_go $PSEUDO_VERSION" >> go.mod
             echo "UPDATE_NEEDED=true" >> $GITHUB_ENV
           fi
 
@@ -57,4 +57,3 @@ jobs:
           git add go.mod go.sum
           git diff --cached --quiet || git commit -m "Auto-update tester305/webview_go pseudo-version"
           git push
-
