@@ -52,8 +52,8 @@ Calling `Eval()` or `Dispatch()` before `Run()` does not work because the webvie
 [go-docs]: https://pkg.go.dev/github.com/tester305/webview_go
 [webview]: https://github.com/webview/webview
 
-[!WARNING]
-Make sure your go.mod has this or it won't work
+> [!WARNING]
+> Make sure your go.mod has this or it won't work
 ```bash
 replace github.com/webview/webview_go => github.com/tester305/webview_go v0.0.0-20251026164803-91a816e2de3d
 ```
