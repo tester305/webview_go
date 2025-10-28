@@ -6,4 +6,4 @@ replace github.com/webview/webview_go => github.com/tester305/webview_go v0.0.0-
 
 require github.com/webview/webview_go v0.0.0-20251027181246-1896a0f63139
 
-replace github.com/tester305/webview_go => github.com/tester305/webview_go v0.0.0-20251028154756-691895640901
+replace github.com/tester305/webview_go => github.com/tester305/webview_go v0.0.0-20251028154837-f12c3359296b
