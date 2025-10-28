@@ -1,1 +1,9 @@
-//go:build gtk40\n// +build gtk40\n\npackage webview\n\n/*\n#cgo pkg-config: gtk+-3.0 webkit2gtk-4.0\n*/\nimport "C"
+//go:build gtk40
+// +build gtk40
+
+package webview
+
+/*
+#cgo pkg-config: gtk+-3.0 webkit2gtk-4.0
+*/
+import "C"
