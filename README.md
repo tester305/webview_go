@@ -2,6 +2,8 @@
 > [!NOTE]
 > this is tested and works now
 
+<img width="408" height="612" alt="Copilot_20251029_142803-removebg-preview" src="https://github.com/user-attachments/assets/fb7757a1-40d2-49ce-89a9-bb46379a1172" />
+
 
 [![GoDoc](https://godoc.org/github.com/tester305/webview_go?status.svg)](https://godoc.org/github.com/tester305/webview_go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tester305/webview_go)](https://goreportcard.com/report/github.com/tester305/webview_go)
