@@ -35,7 +35,11 @@ Save one of the example programs into your project directory.
 ```bash
 curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/basic/main.go"
 ```
+Or save one of the bind example programs into your project directory.
 
+```bash
+curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/bind/main.go"
+```
 Install dependencies.
 
 ```bash
