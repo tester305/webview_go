@@ -31,10 +31,18 @@ jobs:
           cd C:\go_webview_test
           go build -ldflags="-H windowsgui" || echo "go build failed"
 
-      - name: Simulate window launch
+      - name: Extract HTML and echo visible text
+        shell: pwsh
         run: |
-          echo "Window shows with text: (text there) PASS!"
-          echo "This worked, goodbye."
+          $source = Get-Content C:\go_webview_test\main.go
+          $htmlLine = $source | Select-String 'html := "(.*)"'
+          if ($htmlLine) {
+            $html = $htmlLine.Matches[0].Groups[1].Value
+            $text = $html -replace '<[^>]+>', ''
+            echo "Webview will show: $text"
+          } else {
+            echo "No HTML found in main.go"
+          }
 
       - name: Final success override
         run: |
