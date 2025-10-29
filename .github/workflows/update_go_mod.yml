@@ -14,16 +14,25 @@ jobs:
       - name: Checkout main project
         uses: actions/checkout@v4
 
-      - name: Fetch latest commit from tester305/webview_go and update go.mod
+      - name: Fetch latest commit info from tester305/webview_go
         run: |
           set -e
 
-          echo "Fetching latest commit hash..."
-          LATEST_HASH=$(git ls-remote https://github.com/tester305/webview_go.git refs/heads/master | cut -f1)
-          echo "Latest hash: $LATEST_HASH"
+          echo "Fetching latest commit info from GitHub API..."
+          COMMIT_JSON=$(curl -s https://api.github.com/repos/tester305/webview_go/commits/master)
+          LATEST_HASH=$(echo "$COMMIT_JSON" | jq -r '.sha')
+          COMMIT_DATE=$(echo "$COMMIT_JSON" | jq -r '.commit.committer.date')
 
-          echo "Fetching commit date..."
-          COMMIT_DATE=$(curl -s https://api.github.com/repos/tester305/webview_go/commits/$LATEST_HASH | jq -r '.commit.committer.date')
+          if [ "$LATEST_HASH" = "null" ] || [ -z "$LATEST_HASH" ]; then
+            echo "Failed to fetch latest commit hash. Aborting."
+            exit 1
+          fi
+
+          if [ "$COMMIT_DATE" = "null" ] || [ -z "$COMMIT_DATE" ]; then
+            echo "Failed to fetch commit date. Aborting."
+            exit 1
+          fi
+
           UTC_DATE=$(date -u -d "$COMMIT_DATE" +"%Y%m%d%H%M%S")
           PSEUDO_VERSION="v0.0.0-${UTC_DATE}-${LATEST_HASH:0:12}"
           echo "Latest pseudo-version: $PSEUDO_VERSION"
@@ -60,3 +69,4 @@ jobs:
           git add go.mod go.sum
           git diff --cached --quiet || git commit -m "AUWRD: update tester305/webview_go pseudo-version"
           git push
+          
