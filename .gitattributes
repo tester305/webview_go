@@ -1,0 +1,4 @@
+# .gitattributes
+*.go linguist-language=Go
+*.c linguist-vendored
+*.h linguist-vendored
