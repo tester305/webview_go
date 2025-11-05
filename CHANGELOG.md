@@ -15,5 +15,5 @@
 11. `WebView.Bind()` kept the name, but changed the semantics. Only functions can be bound. Not the structs, like in Lorca.
 
 
-### Migrating from v0.1.1 to v0.10.0
+### new update?
 1. literally everything.
