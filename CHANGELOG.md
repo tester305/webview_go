@@ -13,3 +13,7 @@
 9. `WebView.Eval()` remained the same.
 10. `WebView.InjectCSS()` has been removed. Use eval to inject style tag with CSS inside.
 11. `WebView.Bind()` kept the name, but changed the semantics. Only functions can be bound. Not the structs, like in Lorca.
+
+
+### Migrating from v0.1.1 to v0.10.0
+1. literally everything.
