@@ -4,10 +4,10 @@
 *.go            linguist-language=Go
 *.c             linguist-vendored
 *.h             linguist-vendored
-*.cpp           linguist-vendored     # ← C++ GREMLIN TRAPPED
-*.cc            linguist-vendored     # ← extra trap
-*.cxx           linguist-vendored     # ← just in case
-*.hpp           linguist-vendored     # ← headers too
+*.cpp           linguist-vendored     
+*.cc            linguist-vendored    
+*.cxx           linguist-vendored     
+*.hpp           linguist-vendored    
 *.hxx           linguist-vendored
 
 # ───────────────────────────────
