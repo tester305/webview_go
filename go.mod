@@ -2,4 +2,4 @@ module github.com/tester305/webview_go
 
 go 1.13
 
-replace github.com/webview/webview_go => github.com/tester305/webview_go v0.0.0-20251105172015-a7154624e9a9
+replace github.com/webview/webview_go => github.com/tester305/webview_go v0.0.0-20251105173439-257cfa156799
