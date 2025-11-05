@@ -1,4 +1,20 @@
-# .gitattributes
-*.go linguist-language=Go
-*.c linguist-vendored
-*.h linguist-vendored
+# ───────────────────────────────
+# GO IS THE ONE TRUE LANGUAGE
+# ───────────────────────────────
+*.go            linguist-language=Go
+*.c             linguist-vendored
+*.h             linguist-vendored
+*.cpp           linguist-vendored     # ← C++ GREMLIN TRAPPED
+*.cc            linguist-vendored     # ← extra trap
+*.cxx           linguist-vendored     # ← just in case
+*.hpp           linguist-vendored     # ← headers too
+*.hxx           linguist-vendored
+
+# ───────────────────────────────
+# BONUS: HIDE BUILD GARBAGE
+# ───────────────────────────────
+*.o             linguist-generated
+*.a             linguist-generated
+*.so            linguist-generated
+*.dll           linguist-generated
+*.exe           linguist-generated
