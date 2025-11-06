@@ -40,7 +40,7 @@ Or save one of the bind example programs into your project directory.
 ```bash
 curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/bind/main.go"
 ```
-Or if your too lazy to deal with HTML save one of the google browser templates into your project directory
+Or if you're too lazy to deal with HTML save one of the google browser templates into your project directory
 ```bash
 curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/google_examples/main.go"
 ```
@@ -58,7 +58,7 @@ go build
 
 ### Notes
 
-Calling `Eval()` or `Dispatch()` before `Run()` does not work because the webview instance has only been configured and not yet started.
+Calling `Eval()` or `Dispatch()` before `Run()` doesn't work because the webview instance has only been configured and not yet started.
 
 [go-docs]: https://pkg.go.dev/github.com/tester305/webview_go
 [webview]: https://github.com/webview/webview
