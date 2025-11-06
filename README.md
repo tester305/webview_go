@@ -40,6 +40,10 @@ Or save one of the bind example programs into your project directory.
 ```bash
 curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/bind/main.go"
 ```
+Or if your too lazy to deal with HTML save one of the google browser templates into your project directory
+```bash
+curl -sSLo main.go "https://raw.githubusercontent.com/tester305/webview_go/master/examples/google_examples/main.go"
+```
 Install dependencies.
 
 ```bash
