@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout main project
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Fetch latest commit info from tester305/webview_go
         run: |
