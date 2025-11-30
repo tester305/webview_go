@@ -32,10 +32,10 @@ import (
 	"sync"
 	"unsafe"
 
-_ "github.com/tester305/webview_go/libs/mswebview2" // required for CGO side effects in non-main package
-_ "github.com/tester305/webview_go/libs/mswebview2/include"
-_ "github.com/tester305/webview_go/libs/webview"
-_ "github.com/tester305/webview_go/libs/webview/include"
+	_ "github.com/tester305/webview_go/libs/mswebview2" // required for CGO side effects in non-main package
+	_ "github.com/tester305/webview_go/libs/mswebview2/include"
+	_ "github.com/tester305/webview_go/libs/webview"
+	_ "github.com/tester305/webview_go/libs/webview/include"
 )
 
 func init() {
