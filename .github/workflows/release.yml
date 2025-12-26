@@ -29,10 +29,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v4
         with:
           go-version: '1.23'
 
@@ -72,7 +74,7 @@ jobs:
           go build -v -o $output
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: webview_go-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/webview_go-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
@@ -82,12 +84,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --tags --force
 
       - name: Generate next tag and title
         id: tagger
         run: |
-          git fetch --tags
           latest=$(git tag | grep '^continuous-' | sort -V | tail -n1)
           if [ -z "$latest" ]; then
             next_tag="continuous-1"
@@ -97,13 +103,8 @@ jobs:
             sub=$(echo "$latest" | sed 's/^continuous-//' | cut -s -d. -f2)
             if [ -z "$sub" ]; then
               num=$((base + 1))
-              if [ "$num" -gt 1000 ]; then
-                next_tag="continuous-1.1"
-                title="1.1 Continuous Build"
-              else
-                next_tag="continuous-$num"
-                title="$num Continuous Build"
-              fi
+              next_tag="continuous-$num"
+              title="$num Continuous Build"
             else
               major=$base
               minor=$((sub + 1))
@@ -113,13 +114,19 @@ jobs:
           fi
           echo "next_tag=$next_tag" >> $GITHUB_OUTPUT
           echo "release_title=$title" >> $GITHUB_OUTPUT
+          git tag -f "$next_tag"
+
+      - name: Configure git for pushing
+        run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag -f "$next_tag"
-          git push origin --force "refs/tags/$next_tag"
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
+
+      - name: Push new tag
+        run: git push origin ${{ steps.tagger.outputs.next_tag }} --force
 
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           path: ./dist
 
@@ -137,5 +144,3 @@ jobs:
           files: ./dist/**
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-
